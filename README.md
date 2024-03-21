@@ -1,21 +1,22 @@
 # Eye_Guide_Bionic_Hand
 
-
-<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/1bb86b88-6bc0-4cc3-9268-b3c28e9f4a3f" width="550" height="400">
-
+<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/bf5582c0-6dfb-4694-b4a8-43fc920a334a" width="800" height="400">
 
 ## Introduction
+
 This is a prototype for a bionic hand that is being controlled by sight  
 
-Diagram of a setup:  
+Diagram of a setup:
 
-<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/3518a13c-037c-4357-af16-87f968145483" width="400" height="400">  
+<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/3518a13c-037c-4357-af16-87f968145483" width="400" height="400">
+
+<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/172017b8-05c3-4439-9eb6-0e585f5284b3" width="500" height="400">
 
 Device:  
 
-<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/592bb0e7-364d-4366-a757-791f996776e2" width="470" height="400">  
-
+<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/bb6ba301-e474-4598-9a5e-9eaf12f8e150" width="900" height="500">  
 
   
 Demo:  
-https://youtube.com/shorts/Qv7LKtov7rQ?feature=share
+https://youtube.com/shorts/Qv7LKtov7rQ?feature=share - Forearm
+https://www.youtube.com/watch?v=nPOFEXqgKGg - Palm
