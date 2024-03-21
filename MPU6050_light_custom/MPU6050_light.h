@@ -33,17 +33,22 @@
 
 #define DEFAULT_GYRO_COEFF    0.98
 
-struct RawValues {
-	float ax;
-	float ay;
-	float az;
-	float gx;
-	float gy;
-	float gz;
-};
-
 class MPU6050{
   public:
+	struct RawValues {
+		int16_t ax;
+		int16_t ay;
+		int16_t az;
+		int16_t gx;
+		int16_t gy;
+		int16_t gz;
+		int16_t axOf;
+		int16_t ayOf;
+		int16_t azOf;
+		int16_t gxOf;
+		int16_t gyOf;
+		int16_t gzOf;
+	};
     // INIT and BASIC FUNCTIONS
 	MPU6050(TwoWire &w);
     byte begin(int gyro_config_num, int acc_config_num, int angConf);
@@ -122,6 +127,8 @@ class MPU6050{
     float filterGyroCoef; // complementary filter coefficient to balance gyro vs accelero data to get angle
 	RawValues rawAccGyro;
 	int angleRemap = 0; //0: default, 1: XY -> ZX, 2: XY -> ZY
+	float sgZ, dt;
+	unsigned long Tnew;
 };
 
 #endif

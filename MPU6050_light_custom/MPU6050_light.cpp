@@ -166,6 +166,13 @@ void MPU6050::calcOffsets(bool is_calc_gyro, bool is_calc_acc){
     gyroYoffset = ag[4] / CALIB_OFFSET_NB_MES;
     gyroZoffset = ag[5] / CALIB_OFFSET_NB_MES;
   }
+
+  rawAccGyro.axOf = accXoffset;
+  rawAccGyro.ayOf = accYoffset;
+  rawAccGyro.azOf = accZoffset;
+  rawAccGyro.gxOf = gyroXoffset;
+  rawAccGyro.gyOf = gyroYoffset;
+  rawAccGyro.gzOf = gyroZoffset;
 }
 
 /* UPDATE */
@@ -179,7 +186,7 @@ void MPU6050::fetchData(){
   int16_t rawData[7]; // [ax,ay,az,temp,gx,gy,gz]
 
   for(int i=0;i<7;i++){
-	rawData[i]  = wire->read() << 8;
+	  rawData[i]  = wire->read() << 8;
     rawData[i] |= wire->read();
   }
 
@@ -190,13 +197,6 @@ void MPU6050::fetchData(){
   rawAccGyro.gy = rawData[5];
   rawAccGyro.gz = rawData[6];
 
-  float xAOffset = accXoffset;
-  float yAOffset = accYoffset;
-  float zAOffset = accZoffset;
-  float xGOffset = gyroXoffset;
-  float yGOffset = gyroYoffset;
-  float zGOffset = gyroZoffset;
-
   if (angleRemap == 1) {
     rawData[0] = -rawAccGyro.ay;
     rawData[1] = -rawAccGyro.az;
@@ -204,29 +204,8 @@ void MPU6050::fetchData(){
     rawData[4] = -rawAccGyro.gy;
     rawData[5] = -rawAccGyro.gz;
     rawData[6] = rawAccGyro.gx;
-
-    accXoffset = yAOffset;
-    accYoffset = -zAOffset;
-    accZoffset = -xAOffset;
-    gyroXoffset = yGOffset;
-    gyroYoffset = -zGOffset;
-    gyroZoffset = -xGOffset;
   }
-  if (angleRemap == 2) {
-    rawData[0] = rawAccGyro.ay;
-    rawData[1] = rawAccGyro.az;
-    rawData[2] = rawAccGyro.ax;
-    rawData[4] = rawAccGyro.gy;
-    rawData[5] = rawAccGyro.gz;
-    rawData[6] = rawAccGyro.gx;
-
-    accXoffset = yAOffset;
-    accYoffset = zAOffset;
-    accZoffset = -xAOffset;
-    gyroXoffset = yGOffset;
-    gyroYoffset = zGOffset;
-    gyroZoffset = -xGOffset;
-  }
+  
   if (angleRemap == 3) {
     rawData[0] = rawAccGyro.az;
     rawData[1] = rawAccGyro.ay;
@@ -234,23 +213,7 @@ void MPU6050::fetchData(){
     rawData[4] = rawAccGyro.gz;
     rawData[5] = rawAccGyro.gy;
     rawData[6] = -rawAccGyro.gx;
-
-    accXoffset = -zAOffset;
-    accYoffset = yAOffset;
-    accZoffset = xAOffset;
-    gyroXoffset = -zGOffset;
-    gyroYoffset = yGOffset;
-    gyroZoffset = xGOffset;
   }
-
-/*
-  accXoffset = 0;
-    accYoffset = 0;
-    accZoffset = 0;
-    gyroXoffset = 0;
-    gyroYoffset = 0;
-    gyroZoffset = 0;
-    */
 
   accX = ((float)rawData[0]) / acc_lsb_to_g - accXoffset;
   accY = ((float)rawData[1]) / acc_lsb_to_g - accYoffset;
@@ -266,12 +229,12 @@ void MPU6050::update(){
   this->fetchData();
   
   // estimate tilt angles: this is an approximation for small angles!
-  float sgZ = (accZ>=0)-(accZ<0); // allow one angle to go from -180 to +180 degrees
+  sgZ = (accZ>=0)-(accZ<0); // allow one angle to go from -180 to +180 degrees
   angleAccX =   atan2(accY, sgZ*sqrt(accZ*accZ + accX*accX)) * RAD_2_DEG; // [-180,+180] deg
   angleAccY = - atan2(accX,     sqrt(accZ*accZ + accY*accY)) * RAD_2_DEG; // [- 90,+ 90] deg
 
-  unsigned long Tnew = millis();
-  float dt = (Tnew - preInterval) * 1e-3;
+  Tnew = millis();
+  dt = (Tnew - preInterval) * 1e-3;
   preInterval = Tnew;
 
   // Correctly wrap X and Y angles (special thanks to Edgar Bonet!)
