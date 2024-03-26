@@ -6,6 +6,9 @@
 
 This is a prototype for a bionic hand that is being controlled by sight  
 
+The detailed description of the project can be found here:  <br>
+https://medium.com/@Wosk1947/upper-limb-prosthesis-controlled-by-head-tilting-246490f99470
+
 Diagram of a setup:
 
 <img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/3518a13c-037c-4357-af16-87f968145483" width="400" height="400">
@@ -18,5 +21,5 @@ Device:
 
   
 Demo:  
-https://youtube.com/shorts/Qv7LKtov7rQ?feature=share - Forearm
+https://youtube.com/shorts/Qv7LKtov7rQ?feature=share - Forearm  <br>
 https://www.youtube.com/watch?v=nPOFEXqgKGg - Palm
