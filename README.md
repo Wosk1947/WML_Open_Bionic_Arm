@@ -1,6 +1,8 @@
 # Eye_Guide_Bionic_Hand
 
-<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/bf5582c0-6dfb-4694-b4a8-43fc920a334a" width="800" height="400">
+<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/bf5582c0-6dfb-4694-b4a8-43fc920a334a" width="800" height="400">   <br>
+<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/a5ad507a-41d7-427f-a6ae-7719ffbecf42" width="800" height="400">
+
 
 ## Introduction
 
@@ -19,6 +21,9 @@ Device:
 
 <img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/bb6ba301-e474-4598-9a5e-9eaf12f8e150" width="900" height="500">  
 
+Palm:
+
+<img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/2745f08d-4644-4483-9e71-4f7e07657e1e" width="900" height="500">
   
 Demo:  
 https://youtube.com/shorts/Qv7LKtov7rQ?feature=share - Forearm  <br>
