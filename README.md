@@ -27,4 +27,5 @@ Palm:
   
 Demo:  
 https://youtube.com/shorts/Qv7LKtov7rQ?feature=share - Forearm  <br>
-https://www.youtube.com/watch?v=nPOFEXqgKGg - Palm
+https://www.youtube.com/watch?v=nPOFEXqgKGg - Palm   <br>
+https://www.youtube.com/watch?v=ZQzcJe6O7Kc - Palm
