@@ -8,6 +8,7 @@ using namespace BLA;
 Servo servo1;
 Servo servo2;
 Servo servo3;
+Servo servo4;
 MPU6050 mpu(Wire);
 MPU6050 mpu2(Wire);
 
@@ -250,11 +251,92 @@ void palmMotorAngles(BLA::Matrix<4,4> headRotation, BLA::Matrix<4,4> armRotation
   }        
   angles[0] = beta * 180 / PI; 
   angles[1] = alpha * 180 / PI;
-}  
+}
+
+void palmMotorAnglesV2(BLA::Matrix<4,4> headRotation, BLA::Matrix<4,4> armRotation, double vX, double vZ, double* angles) {
+  if (vX > 1){vX = 1;}
+  if (vZ > 1){vZ = 1;}
+  if (vX < -1){vX = -1;}
+  if (vZ < -1){vZ = -1;}
+  double y0 = 0;
+  double x0 = -vZ;
+  double z0 = vX;
+  if (1 - vZ * vZ - vX * vX >= 0) {
+    y0 = sqrt(1 - vZ * vZ - vX * vX);
+  } else {
+    double vLen = sqrt(vX * vX + vZ * vZ);
+    x0 = x0 / vLen;
+    z0 = z0 / vLen;
+  }
+  double v0[3] = {x0, y0, z0};  
+  double b0 = asin(v0[2]);
+  double a0 = 0;
+  if (cos(b0) != 0) {
+    double sin = v0[0]/cos(b0);
+    if (sin > 1) {
+      sin = 1;
+    }
+    if (sin < -1) {
+      sin = -1;
+    }
+    a0 = -asin(sin);
+  }
+  rVH = headRotation * eulerAnglesToMatrix(b0 * 180 / PI, 0, a0 * 180 / PI, EEulerOrder::ORDER_ZXY);                              
+  getTranslation(Inverse(armRotation) * rVH * palmForward, vPalm);
+  if (vPalm[1] < 0) {
+    vPalm[1] = 0;
+    double lenMultiplier = 1 / sqrt(vPalm[0] * vPalm[0] + vPalm[2] * vPalm[2]);
+    vPalm[0] = vPalm[0] * lenMultiplier;
+    vPalm[2] = vPalm[2] * lenMultiplier;
+  } 
+  beta = asin(vPalm[2]); 
+  if (cos(beta) != 0) {
+    double s = vPalm[0] / cos(beta);
+    if (s > 1) {
+      s = 1;
+    }
+    if (s < -1) {
+      s = -1;
+    }
+    alpha = -asin(s);
+  }        
+  angles[0] = beta * 180 / PI; 
+  angles[1] = alpha * 180 / PI;
+}
+
+double clampValue(double value, double min, double max) {
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  return value;
+} 
+
+double deadzoneValue(double value, double min, double dmin, double dmax, double max) {
+  if (value < min) {
+    return min;
+  }
+  if (value > max) {
+    return max;
+  }
+  if (value > dmin && value < dmax) {
+    return 0;
+  }
+  if (value >= dmax && value <= max) {
+    return max * ((value - dmax) / (max - dmax));
+  }
+  if (value <= dmin && value >= min) {
+    return min * ((dmin - value) / (dmin - min));
+  }
+  return value;
+} 
 
 void setup() {
   Serial.begin(9600);
   pinMode(7, INPUT_PULLUP);
+  pinMode(8, INPUT_PULLUP);
   mpu.setAddress(0x68);
   mpu2.setAddress(0x69);
   Wire.begin();
@@ -266,11 +348,13 @@ void setup() {
   Serial.println("STARTED!\n");
   //timer = millis();
   servo1.attach(5);
-  servo1.write(0);
+  servo1.write(90);
   servo2.attach(6);
   servo2.write(90);
   servo3.attach(9);
   servo3.write(90);
+  servo4.attach(10);
+  servo4.write(0);
 }
 
 bool calibrated = false;
@@ -288,15 +372,23 @@ BLA::Matrix<4,4> armRot4;
 int currentAngle = 0;
 int state = 0;
 
+//double mpuX = 0;
+//double mpuY = 0;
+//double mpuZ = 0;
+
 bool zCalibrated = false;
 double zOffset = 0;
 double prevZ = 0;
+double prevX = 0;
 double dZ = 0;
+double dX = 0;
 double currentZ = 0;
 double currentX = 0;
 double originX = 0;
 double vX = 0;
 double vZ = 0;
+double currentY = 0;
+double vY = 0;
 
 double palmAngles[2] = {0,0};
 double armAngles[3] = {0,0,0};
@@ -306,19 +398,60 @@ const double a1 = 0.30;
 const double a2 = 0.31;
 
 int buttonState = 1;
+int buttonClamp = 1;
+int buttonPose = 1;
 
 double newAngle = 99999999;
 double angle1;
 double angle2;
 
 const double headPalmThreshold = 8;
+const double headPalmThresholdY = 6;
 const double palmThreshold = 90;
 
 bool buttonJustPressed = true;
 bool buttonJustReleased = true;
 
+float potState = 0;
+bool clampState = false;
+bool clampSwitch = false;
+
+//Smoothing
+double resetFrames = 50;
+double currentResetFrame = resetFrames;
+double currentResetRollFrame = resetFrames;
+double rollT = 1;
+double t = 0.9;
+
+int calibrationFrames = 20;
+double zSum = 0;
+int calibrationCount = 0;
+
+//Pose switch
+int cooldownFrames = 20;
+int cooldownCount = cooldownFrames;
+int pose = 0;
+
+double scaleAngle(double angle) {
+  return 190 * angle / 180;
+}
+
+double clampAngle(double angle) {
+  if (angle < 10) {
+    return 10;
+  }
+  if (angle > 170) {
+    return 170;
+  }
+  return;
+}
+
 void loop() {
-  buttonState = digitalRead(7);
+  //buttonState = digitalRead(7);
+  //potState = analogRead(7);
+  buttonClamp = digitalRead(7);
+  buttonPose = digitalRead(8);
+
   if (buttonState == 1) {
     servo2.write(90);
     servo3.write(90);
@@ -326,7 +459,7 @@ void loop() {
     mpu.update();
     mpuHeadRot4 = eulerAnglesToMatrix(mpu.getAngleX(), mpu.getAngleY(), 0, EEulerOrder::ORDER_YXZ);
     mpu2.update();
-    mpuHandRot4 = eulerAnglesToMatrix(0,90 + mpu2.getAngleY(),mpu2.getAngleX(), EEulerOrder::ORDER_YXZ);
+    mpuHandRot4 = eulerAnglesToMatrix(0, 90 + mpu2.getAngleY(),mpu2.getAngleX(), EEulerOrder::ORDER_YXZ);
     getTranslation(mpuHeadRot4 * mpuHeadUp, mpuHeadJointVec);
     angleToSurface(mpuHeadJointVec[0], mpuHeadJointVec[1], mpuHeadJointVec[2], -mpuHeadJointVec[2] * h, mpuHandRot4, a1, a2, armAngles);
     newAngle = 99999999;
@@ -347,45 +480,168 @@ void loop() {
       newAngle = currentAngle;
     }
     currentAngle = newAngle;
-    servo1.write(currentAngle);
+    //servo1.write(currentAngle);
     if (buttonJustReleased) {
       buttonJustReleased = false;
     }
+    buttonState = 0; //Go to palm controller after first frame
   } else if (buttonState == 0){
     if (buttonJustPressed) {
       buttonJustPressed = false;
       buttonJustReleased = true;
-      armRot4 = mpuHandRot4 * eulerAnglesToMatrix(0, 0, currentAngle, EEulerOrder::ORDER_YXZ);
-      mpuHeadRot4 = eulerAnglesToMatrix(mpu.getAngleX(), mpu.getAngleY(), -15, EEulerOrder::ORDER_YXZ);
-      originX = mpu.getAngleX();
+      //armRot4 = mpuHandRot4 * eulerAnglesToMatrix(0, 0, 10, EEulerOrder::ORDER_YXZ);
+      //armRot4 = mpuHandRot4 * eulerAnglesToMatrix(0, 0, currentAngle, EEulerOrder::ORDER_YXZ);
+
+      //Normal
+      //mpuHeadRot4 = eulerAnglesToMatrix(mpu.getAngleX(), mpu.getAngleY(), 0, EEulerOrder::ORDER_YXZ);
+      //originX = mpu.getAngleX();
+
+      //Pose mode
+      mpuHeadRot4 = eulerAnglesToMatrix(0, 0, 0, EEulerOrder::ORDER_YXZ);
+      originX = 0;
+      
       currentZ = 0;
     }
     mpu.update();
+    mpu2.update();
+
+    //Pose mode
+    mpuHandRot4 = eulerAnglesToMatrix(0, 90 + mpu2.getAngleY(),mpu2.getAngleX(), EEulerOrder::ORDER_YXZ);
+    armRot4 = mpuHandRot4 * eulerAnglesToMatrix(0, 0, 25, EEulerOrder::ORDER_YXZ);
+
     if (!zCalibrated) {
-      zCalibrated = true;
-      zOffset = mpu.getAngleZ();
-      prevZ = zOffset;
+      calibrationCount++;
+      zSum += mpu.getAngleZ();
+      if (calibrationCount == calibrationFrames) {
+        zCalibrated = true;
+        zOffset = zSum / calibrationFrames;
+        prevZ = zOffset;
+      }
     }
+
     dZ = mpu.getAngleZ() - prevZ;
-    if (abs(dZ) < 0.08) {dZ = 0;}
+    if (abs(dZ) < 0.15) {dZ = 0;}
+
     prevZ = mpu.getAngleZ();
     currentZ += dZ;
     currentX = mpu.getAngleX() - originX;
-    if (currentX < -headPalmThreshold) {
-      currentX = -headPalmThreshold;
+    //Normal Roll
+    //currentY = mpu.getAngleY();
+    currentX = clampValue(currentX, -headPalmThreshold, headPalmThreshold);
+    currentY = clampValue(currentY, -headPalmThresholdY, headPalmThresholdY);
+    if (currentZ < -headPalmThreshold ) {
+      currentZ = -headPalmThreshold;
     }
-    if (currentX > headPalmThreshold) {
-      currentX = headPalmThreshold;
+    if (currentZ > headPalmThreshold) {
+      currentZ = headPalmThreshold;
     }
-    if (currentZ < -headPalmThreshold || currentZ > headPalmThreshold) {
-      currentZ -= dZ;
-    }
-    vX = palmThreshold * currentX / headPalmThreshold;
-    vZ = palmThreshold * currentZ / headPalmThreshold;
 
+    //Pose switch
+    cooldownCount++;
+    if (cooldownCount > cooldownFrames) {
+      cooldownCount = cooldownFrames;
+    }
+    dX = mpu.getAngleX() - prevX;
+    prevX = mpu.getAngleX();
+    if (buttonPose == 1) {
+      currentY = mpu.getAngleY();
+    }
+    vY = vY * t + (palmThreshold * currentY / headPalmThresholdY) * (1 - t);
+    if (buttonPose == 0 && cooldownCount == cooldownFrames) {
+      if (abs(dX) > abs(dZ) && dX < -1.5 && pose == 0) {
+        pose = -1;
+        cooldownCount = 0;
+      }
+      if (abs(dX) > abs(dZ) && dX > 1.5 && pose == -1) {
+        pose = 0;
+        cooldownCount = 0;
+      }
+      if (abs(dZ) > abs(dX) && dZ > 1.5 && pose == 0) {
+        pose = 1;
+        cooldownCount = 0;
+      }
+      if (abs(dZ) > abs(dX) && dZ < -1.5 && pose == 1) {
+        pose = 0;
+        cooldownCount = 0;
+      }
+    }
+    if (pose == 0) {
+      vX = 0;
+      vZ = 0;
+    }
+    if (pose == -1) {
+      vX = -90;
+      vZ = 0;
+    }
+    if (pose == 1) {
+      vX = 10;
+      vZ = 60;
+    }
+
+    //Normal Smoothing
+    /*
+    vX = vX * t + (palmThreshold * currentX / headPalmThreshold) * (1 - t);
+    vZ = vZ * t + (80 * currentZ / headPalmThreshold) * (1 - t);
+    vY = vY * t + (palmThreshold * currentY / headPalmThresholdY) * (1 - t);
+    */
+
+    //Move-Roll Smoothing
+    /*
+    if (potState > 512) {
+      t = 1;
+      currentResetFrame = 0;
+      if (currentResetRollFrame < resetFrames) {
+        currentResetRollFrame++;
+        rollT = 0.95;
+      } else {
+        rollT = 0.85;
+      }
+    } else {
+      rollT = 1;
+      currentResetRollFrame = 0;
+      if (currentResetFrame < resetFrames) {
+        currentResetFrame++;
+        t = 0.95;
+      } else {
+        t = 0.85;
+      }
+    }
+
+    vX = vX * t + (palmThreshold * currentX / headPalmThreshold) * (1 - t);
+    vZ = vZ * t + (80 * currentZ / headPalmThreshold) * (1 - t);
+    vY = vY * rollT + (palmThreshold * currentY / headPalmThresholdY) * (1 - rollT);
+    */
+    
     palmMotorAngles(mpuHeadRot4, armRot4, vX, vZ, palmAngles);
     servo2.write(palmAngles[1] + 90);
     servo3.write(palmAngles[0] + 90);
+    servo1.write(vY + 90);
+
+    //Normal Clamp
+    if (buttonClamp == 0) {
+      servo4.write(0);
+    } else {
+      servo4.write(35);
+    }
+    
+    //Move-Roll Clamp
+    /*
+    if (potState > 1000) {
+      if (clampSwitch == false) {
+        clampSwitch = true;
+        if (clampState == false) {
+          servo4.write(0);
+          clampState = true;
+        } else {
+          servo4.write(35);
+          clampState = false;
+        }  
+      }
+    } else {
+      clampSwitch = false;
+    }
+    */
+    
   }
   delay(10);
 }
