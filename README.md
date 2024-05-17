@@ -10,6 +10,7 @@ This is a prototype for a bionic hand that is being controlled by sight
 
 The detailed description of the project can be found here:  <br>
 https://medium.com/@Wosk1947/upper-limb-prosthesis-controlled-by-head-tilting-246490f99470
+https://medium.com/@Wosk1947/upper-limb-prosthesis-controlled-by-head-tilting-part-2-controlling-the-hand-b0c7d9c68b96
 
 Diagram of a setup:
 
