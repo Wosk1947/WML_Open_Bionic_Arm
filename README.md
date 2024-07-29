@@ -1,4 +1,4 @@
-# Eye_Guide_Bionic_Hand
+# Weird Motions Lab - Open Bionic Arm
 
 <img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/bf5582c0-6dfb-4694-b4a8-43fc920a334a" width="800" height="400">   <br>
 <img src="https://github.com/Wosk1947/Eye_Guide_Bionic_Hand/assets/66104180/a5ad507a-41d7-427f-a6ae-7719ffbecf42" width="800" height="400">
