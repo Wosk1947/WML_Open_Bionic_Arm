@@ -1,5 +1,3 @@
-<img src="https://github.com/user-attachments/assets/55710173-04e5-4c61-b3bd-3f9e5fee6e36" width="800" height="180">
-
 # Weird Motions Lab - Open Bionic Arm
 
 <img src="https://github.com/user-attachments/assets/5328c469-40ae-4dbd-a03d-4296725d85a0" width="800" height="450"> 
