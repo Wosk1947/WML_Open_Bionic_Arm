@@ -17,7 +17,5 @@ https://habr.com/ru/articles/777560/  <br>
 https://habr.com/ru/articles/801967/  <br>
 https://habr.com/ru/articles/815063/  <br>
   
-Demo:  
-https://www.youtube.com/shorts/Qv7LKtov7rQ - Forearm  <br>
-https://www.youtube.com/watch?v=nPOFEXqgKGg - Palm   <br>
-https://www.youtube.com/watch?v=ZQzcJe6O7Kc - Palm
+Demonstrations:  
+https://www.youtube.com/playlist?list=PLGNXqp9PF4vx9b6AH4N01EwK2L29VTBjH
