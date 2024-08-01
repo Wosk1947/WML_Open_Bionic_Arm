@@ -14,6 +14,7 @@ https://medium.com/@Wosk1947/upper-limb-prosthesis-controlled-by-head-tilting-pa
 https://habr.com/ru/articles/777560/  <br>
 https://habr.com/ru/articles/801967/  <br>
 https://habr.com/ru/articles/815063/  <br>
+https://habr.com/ru/articles/832688/
   
 Demonstrations:  
 https://www.youtube.com/playlist?list=PLGNXqp9PF4vx9b6AH4N01EwK2L29VTBjH
