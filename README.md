@@ -1,6 +1,6 @@
 # Weird Motions Lab - Open Bionic Arm
 
-<img src="https://github.com/user-attachments/assets/5328c469-40ae-4dbd-a03d-4296725d85a0" width="800" height="450"> 
+<img src="https://github.com/user-attachments/assets/5328c469-40ae-4dbd-a03d-4296725d85a0"> 
 
 ## Introduction
 
