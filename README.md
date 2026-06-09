@@ -12,6 +12,9 @@ https://medium.com/@WeirdMotionsLab/upper-limb-prosthesis-controlled-by-head-til
 https://medium.com/@WeirdMotionsLab/open-bionic-arm-context-based-behavior-a6cba3f5b3bc  <br>
 https://medium.com/@WeirdMotionsLab/wml-bionic-arm-strength-durability-myosensor-7c02481a0569
 
+Hackaday.io: <br>
+https://hackaday.io/project/205876-wml-bionic-arm
+
 Статьи на русском: <br>
 https://habr.com/ru/articles/777560/  <br>
 https://habr.com/ru/articles/801967/  <br>
