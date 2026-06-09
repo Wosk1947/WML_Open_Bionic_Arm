@@ -2,6 +2,9 @@
 
 <img src="https://github.com/user-attachments/assets/e0e4488f-be5e-4555-a588-5bfe9a9386f3"> 
 
+<img src="https://github.com/user-attachments/assets/ea3cc5a9-ea16-4fc7-aa40-62a5536cc5fc">
+
+
 ## Introduction
 
 Open-source bionic arm project  
