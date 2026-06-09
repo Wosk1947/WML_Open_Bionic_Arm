@@ -104,7 +104,7 @@ double clampedPrevSmthVal = 0;
 double clampedCurrSmthVal = 0;
 //Controller
 double centerVal = 50;
-double maxVal = 51;
+double maxVal = 53;
 boolean readyForSpike = true;
 boolean spike = false;
 boolean endSpike = false;
@@ -158,27 +158,28 @@ void updateController(double rawVal) {
     }
   }
 
-  if (readyForSpike && /*checkStartOfSpike(smthBuffer, bufferSize)*/ checkStartOfSpike2(rawBuffer, bufferSize)) {
-    spike = true;
-    readyForSpike = false;
-    setRangeOfBufferToValue(modBuffer, bufferSize, 0, bufferSize, centerVal);
-  }
-  if (spike) {
-    addToBuffer(modBuffer, bufferSize, centerVal);
-    if (checkEndOfSpike(rawBuffer, bufferSize)) {
-      endSpike = true;
-      spike = false;
-      readyForSpike = true;
-      prevSmthVal = centerVal;
-      copyBuffers(modBuffer, smthBuffer, bufferSize);
-    }
-  } else {
-    addToBuffer(modBuffer, bufferSize, clampedSmthBuffer[bufferSize - 1]); //currSmthVal
-  }
+  //if (readyForSpike && /*checkStartOfSpike(smthBuffer, bufferSize)*/ checkStartOfSpike2(rawBuffer, bufferSize)) {
+  //  spike = true;
+  //  readyForSpike = false;
+  //  setRangeOfBufferToValue(modBuffer, bufferSize, 0, bufferSize, centerVal);
+  //}
+  //if (spike) {
+  //  addToBuffer(modBuffer, bufferSize, centerVal);
+  //  if (checkEndOfSpike(rawBuffer, bufferSize)) {
+  //    endSpike = true;
+  //    spike = false;
+  //    readyForSpike = true;
+  //    prevSmthVal = centerVal;
+  //    copyBuffers(modBuffer, smthBuffer, bufferSize);
+  //  }
+  //} else {
+  //  addToBuffer(modBuffer, bufferSize, clampedSmthBuffer[bufferSize - 1]); //currSmthVal
+  //}
+  
 }
 
 double clampPalmAngle(double angle) {
-  return max(min(angle, 120), 30);
+  return max(min(angle, 80), 10);
 }
 
 //PalmController
@@ -186,7 +187,7 @@ double currentPalmAngle = 120;
 double deadzone = 10;
 void updatePalmController(double val) {
   if (val > centerVal) {
-    currentPalmAngle -= delta * sensitivity(abs(val-centerVal), abs(maxVal - centerVal), steepnessUp);
+    currentPalmAngle -= 15;
   }
   if (val < centerVal) {
     currentPalmAngle += 60 /** sensitivity(abs(val-centerVal), abs(maxVal - centerVal) * 0.3, steepnessDown)*/;
@@ -374,8 +375,8 @@ double clampAngle(double angle) {
   if (angle < 10) {
     return 10;
   }
-  if (angle > 160) {
-    return 160;
+  if (angle > 140) {
+    return 140;
   }
   return angle;
 }
@@ -385,7 +386,8 @@ bool useElbow = true;
 
 void setup() {
   Serial.begin(115200);
-  pinMode(13, OUTPUT);
+  Serial.println("SETUP");
+  pinMode(13, INPUT_PULLUP);
   pinMode(11, OUTPUT);
   mpu.setAddress(0x68);
   Wire.begin();
@@ -397,7 +399,7 @@ void setup() {
 
   if (usePalm) {
     palm.attach(5);
-    palm.write(120);
+    palm.write(80);
   }
   if (useElbow) {  
     elbow.attach(6);
@@ -411,12 +413,13 @@ BLA::Matrix<3,3> armRot4;
 
 int currentAngle = 0;
 int prevCurrentAngle = 0;
+double currentEMA = 0;
 
 double armAngles[3] = {0,0,0};
 
-const double h = 0.12;
-const double a1 = 0.34;
-const double a2 = 0.34;
+const double h = 0.24/*0.12*/;
+const double a1 = 0.32/*0.34*/;
+const double a2 = 0.4/*0.34*/;
 
 double newAngle = 99999999;
 double angle1;
@@ -434,20 +437,17 @@ double finalEMGVal = 0;
 double hState = 0;
 
 bool holding = false;
+bool readyToOpen = false;
+bool onOpen = false;
 
 void loop() {
-  if (spike) {
-    digitalWrite(13, HIGH);
+  int button = digitalRead(13);
+  if (button == 0) {
+    digitalWrite(11, HIGH);
   } else {
-    digitalWrite(13, LOW);
+    digitalWrite(11, LOW);
   }
-  /*
-  if (modBuffer[0] >= centerVal) {
-    digitalWrite(13, HIGH);
-  } else {
-    digitalWrite(13, LOW);
-  }
-  */
+
   //EMG Filter
   int value = analogRead(SensorInputPin);
   int DataAfterFilter = myFilter.update(value);
@@ -474,8 +474,9 @@ void loop() {
   if (!isAngleInValidRange(newAngle) || (abs(currentAngle - newAngle) > 45)) {
     newAngle = currentAngle;
   }
-  currentAngle = newAngle;
-  
+
+  double eT = 0.8;
+  currentAngle = currentAngle * eT + (1 - eT) * newAngle;
 
   //State machine
   switch (handState) {
@@ -484,11 +485,11 @@ void loop() {
       handState = GRAB;
       break;
     case AFTER_ADJUST:
-      digitalWrite(11, HIGH);
-      if (modBuffer[0] >= maxVal) {
+      //digitalWrite(11, HIGH);
+      if (smthBuffer[0] >= maxVal) {
         handState = GRAB;
       }
-      if (spike) {
+      if (button == 0) {
         armRot4 = eulerAnglesToMatrix(0,  0, prevCurrentAngle, EEulerOrder::ORDER_ZXY);
         arm = {0,a1,0};
         palmPosition = mpuHandRot4 * arm;
@@ -501,18 +502,32 @@ void loop() {
       }
       break;
     case GRAB:
-      digitalWrite(11, LOW);
-      finalEMGVal = modBuffer[bufferSize - 1];
-      updatePalmController(modBuffer[bufferSize - 1]);
-      if (currentPalmAngle < 90) {
+      finalEMGVal = smthBuffer[bufferSize - 1];
+      if (finalEMGVal > centerVal && !holding) {
+        palm.write(10);
         holding = true;
-      } else {
-        holding = false;
+        readyToOpen = false;
+        onOpen = false;
       }
-      if (usePalm) {
-        palm.write(currentPalmAngle);
+      if (holding) {
+        if (finalEMGVal < centerVal) {
+          readyToOpen = true;
+        }
       }
-      if (spike) {
+      if (holding && readyToOpen) {
+        if (finalEMGVal > centerVal) {
+          onOpen = true;
+        }
+      }
+      if (holding && onOpen) {
+        if (finalEMGVal < centerVal) {
+          palm.write(80);
+          holding = false;
+          readyToOpen = false;
+          onOpen = false;
+        }
+      }
+      if (button == 0) {
         armRot4 = eulerAnglesToMatrix(0,  0, prevCurrentAngle, EEulerOrder::ORDER_ZXY);
         arm = {0,a1,0};
         palmPosition = mpuHandRot4 * arm;
@@ -522,20 +537,19 @@ void loop() {
         currentAngle = prevCurrentAngle;
         handState = ADJUST;
         hState = 100;
+
+        readyToOpen = false;
+        onOpen = false;
       }
       break;
     case ADJUST:
     if (useElbow) {
-      elbow.write(clampAngle(currentAngle) - 8);
+      elbow.write(clampAngle(currentAngle));
     }
-      if (endSpike) {
+      if (button == 1) {
         adjustExitTime = millis();
         prevCurrentAngle = currentAngle;
-        if (holding) {
-          handState = AFTER_ADJUST;
-        } else {
-          handState = GRAB;
-        }
+        handState = GRAB;
         hState = 0;
       }
       break;
